@@ -2425,6 +2425,21 @@ export const FileUploadRequestSchema = z.object({
   requestId: z.string(),
 });
 
+/**
+ * Symmetric to FileDownloadTokenRequestSchema: the client requests a one-time
+ * capability token for writing a file into the workspace over plain HTTP
+ * (`PUT /api/files/update`). The overwrite decision is made over the
+ * authenticated WebSocket and sealed into the token; the HTTP side only
+ * consumes the token.
+ */
+export const FileUpdateTokenRequestSchema = z.object({
+  type: z.literal("file_update_token_request"),
+  cwd: z.string(),
+  path: z.string(),
+  overwrite: z.boolean().optional(),
+  requestId: z.string(),
+});
+
 export const ClearAgentAttentionMessageSchema = z.object({
   type: z.literal("clear_agent_attention"),
   agentId: z.union([z.string(), z.array(z.string())]),
@@ -2828,6 +2843,7 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   ProjectIconGetRequestSchema,
   FileDownloadTokenRequestSchema,
   FileUploadRequestSchema,
+  FileUpdateTokenRequestSchema,
   ClearAgentAttentionMessageSchema,
   ClientHeartbeatMessageSchema,
   PingMessageSchema,
@@ -5202,6 +5218,21 @@ export const FileDownloadTokenResponseSchema = z.object({
   }),
 });
 
+export const FileUpdateTokenResponseSchema = z.object({
+  type: z.literal("file_update_token_response"),
+  payload: z.object({
+    cwd: z.string(),
+    path: z.string(),
+    token: z.string().nullable(),
+    fileName: z.string().nullable(),
+    mimeType: z.string().nullable(),
+    exists: z.boolean().nullable(),
+    size: z.number().nullable(),
+    error: z.string().nullable(),
+    requestId: z.string(),
+  }),
+});
+
 export const FileUploadResponseSchema = z.object({
   type: z.literal("file.upload.response"),
   payload: z.object({
@@ -5785,6 +5816,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   ProjectIconResponseSchema,
   ProjectIconGetResponseSchema,
   FileDownloadTokenResponseSchema,
+  FileUpdateTokenResponseSchema,
   FileUploadResponseSchema,
   ListProviderModelsResponseMessageSchema,
   ListProviderModesResponseMessageSchema,
@@ -6225,6 +6257,8 @@ export type ProjectIconGetResponse = z.infer<typeof ProjectIconGetResponseSchema
 export type ProjectIcon = z.infer<typeof ProjectIconSchema>;
 export type FileDownloadTokenRequest = z.infer<typeof FileDownloadTokenRequestSchema>;
 export type FileDownloadTokenResponse = z.infer<typeof FileDownloadTokenResponseSchema>;
+export type FileUpdateTokenRequest = z.infer<typeof FileUpdateTokenRequestSchema>;
+export type FileUpdateTokenResponse = z.infer<typeof FileUpdateTokenResponseSchema>;
 export type FileUploadRequest = z.infer<typeof FileUploadRequestSchema>;
 export type FileUploadResponse = z.infer<typeof FileUploadResponseSchema>;
 export type RestartServerRequestMessage = z.infer<typeof RestartServerRequestMessageSchema>;
