@@ -253,6 +253,23 @@ export function useFileExplorerActions(params: { serverId: string } & FileExplor
     [client, normalizedWorkspaceRoot, t],
   );
 
+  const requestFileUpdateToken = useCallback(
+    async (path: string, overwrite: boolean) => {
+      if (!normalizedWorkspaceRoot) {
+        throw new Error(t("workspace.fileExplorer.states.unavailable"));
+      }
+      if (!client) {
+        throw new Error(t("workspace.terminal.hostDisconnected"));
+      }
+      const payload = await client.requestFileUpdateToken(normalizedWorkspaceRoot, path, overwrite);
+      if (payload.error) {
+        throw new Error(payload.error);
+      }
+      return payload;
+    },
+    [client, normalizedWorkspaceRoot, t],
+  );
+
   const createEntry = useCallback(
     async (input: { parentPath: string; name: string; kind: "file" | "directory" }) => {
       if (!client || !normalizedWorkspaceRoot) {
@@ -342,6 +359,7 @@ export function useFileExplorerActions(params: { serverId: string } & FileExplor
     requestDirectoryListing,
     requestFilePreview,
     requestFileDownloadToken,
+    requestFileUpdateToken,
     createEntry,
     renameEntry,
     duplicateEntry,
