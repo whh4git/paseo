@@ -7,6 +7,11 @@ export interface DownloadTokenEntry {
   fileName: string;
   mimeType: string;
   size: number;
+  /**
+   * Update tokens only: whether the client has confirmed overwriting an
+   * existing target. The HTTP handler enforces this at consume time.
+   */
+  overwrite?: boolean;
   expiresAt: number;
 }
 
