@@ -573,6 +573,143 @@ export async function getDownloadableFileInfo({ root, relativePath }: ReadFilePa
   }
 }
 
+export interface UpdatableFileInfo {
+  path: string;
+  absolutePath: string;
+  fileName: string;
+  mimeType: string;
+  exists: boolean;
+  size: number | null;
+}
+
+/**
+ * Resolves an update target inside a workspace. Unlike getDownloadableFileInfo
+ * (which requires the file to exist), a missing target is a valid outcome and
+ * is reported via `exists: false` so the caller can let the client create it.
+ * The mime type of a missing file is derived from its extension only — there
+ * is no content to sample.
+ */
+export async function getUpdatableFileInfo({
+  root,
+  relativePath,
+}: ReadFileParams): Promise<UpdatableFileInfo> {
+  const filePath = await resolveScopedPath({ root, relativePath });
+  const normalizedPath = normalizeRelativePath({ root, targetPath: filePath.requestedPath });
+
+  let handle: FileHandle | null = null;
+  try {
+    handle = await openFileForRead(filePath.resolvedPath);
+    const stats = await handle.stat();
+    if (!stats.isFile()) {
+      throw new Error("Requested path is not a file");
+    }
+    const ext = path.extname(filePath.resolvedPath).toLowerCase();
+    let mimeType = "application/octet-stream";
+    if (ext in IMAGE_MIME_TYPES) {
+      mimeType = IMAGE_MIME_TYPES[ext];
+    } else {
+      const sample = Buffer.alloc(FILE_TYPE_SAMPLE_BYTES);
+      const { bytesRead } = await handle.read(sample, 0, sample.length, 0);
+      const chunk = bytesRead < sample.length ? sample.subarray(0, bytesRead) : sample;
+      if (!isLikelyBinary(chunk)) {
+        mimeType = textMimeTypeForExtension(ext);
+      }
+    }
+    return {
+      path: normalizedPath,
+      absolutePath: filePath.resolvedPath,
+      fileName: path.basename(filePath.requestedPath),
+      mimeType,
+      exists: true,
+      size: stats.size,
+    };
+  } catch (error) {
+    if (isMissingEntryError(error)) {
+      const ext = path.extname(filePath.resolvedPath).toLowerCase();
+      const mimeType =
+        ext in IMAGE_MIME_TYPES ? IMAGE_MIME_TYPES[ext] : textMimeTypeForExtension(ext);
+      return {
+        path: normalizedPath,
+        absolutePath: filePath.resolvedPath,
+        fileName: path.basename(filePath.requestedPath),
+        mimeType,
+        exists: false,
+        size: null,
+      };
+    }
+    throw error;
+  } finally {
+    await handle?.close().catch(() => undefined);
+  }
+}
+
+/**
+ * Streams a write into a workspace file with the same atomicity as
+ * writeExplorerFile: chunks land in a same-directory temp file, are fsynced,
+ * then renamed over the target. Overwrites preserve the existing file mode;
+ * new files default to 0o600. Missing parent directories are created.
+ */
+export async function streamExplorerFileWrite({
+  root,
+  relativePath,
+  source,
+}: {
+  root: string;
+  relativePath: string;
+  source: AsyncIterable<Uint8Array>;
+}): Promise<{ path: string; size: number; modifiedAt: string; revision: string }> {
+  const filePath = await resolveScopedPath({ root, relativePath });
+  const targetPath = filePath.resolvedPath;
+  const dirPath = path.dirname(targetPath);
+
+  await fs.mkdir(dirPath, { recursive: true });
+
+  let targetMode = 0o600;
+  try {
+    const stats = await fs.stat(targetPath);
+    if (stats.isDirectory()) {
+      throw new Error("Requested path is not a file");
+    }
+    targetMode = Number(stats.mode);
+  } catch (error) {
+    if (!isMissingEntryError(error)) {
+      throw error;
+    }
+  }
+
+  const temporaryPath = path.join(
+    dirPath,
+    `.${path.basename(targetPath)}.paseo-${randomUUID()}.tmp`,
+  );
+  let temporaryHandle: FileHandle | null = null;
+  try {
+    temporaryHandle = await fs.open(temporaryPath, "wx", targetMode);
+    if (process.platform !== "win32") {
+      await temporaryHandle.chmod(targetMode & 0o7777);
+    }
+    let size = 0;
+    for await (const chunk of source) {
+      await temporaryHandle.writeFile(chunk);
+      size += chunk.byteLength;
+    }
+    await temporaryHandle.sync();
+    await temporaryHandle.close();
+    temporaryHandle = null;
+
+    await fs.rename(temporaryPath, targetPath);
+    const stats = await fs.stat(targetPath, { bigint: true });
+    return {
+      path: normalizeRelativePath({ root, targetPath: filePath.requestedPath }),
+      size: Number(stats.size),
+      modifiedAt: stats.mtime.toISOString(),
+      revision: fileRevision(stats),
+    };
+  } finally {
+    await temporaryHandle?.close().catch(() => undefined);
+    await fs.unlink(temporaryPath).catch(() => undefined);
+  }
+}
+
 export interface ExplorerCreateEntryParams {
   root: string;
   parentPath: string;

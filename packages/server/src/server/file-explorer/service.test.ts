@@ -1,3 +1,4 @@
+import { existsSync, readdirSync } from "node:fs";
 import {
   appendFile,
   chmod,
@@ -18,9 +19,11 @@ import {
   deleteExplorerEntry,
   duplicateExplorerEntry,
   getExplorerFileVersion,
+  getUpdatableFileInfo,
   readExplorerFile,
   renameExplorerEntry,
   streamExplorerFile,
+  streamExplorerFileWrite,
   writeExplorerFile,
 } from "./service.js";
 
@@ -582,6 +585,120 @@ describe("file explorer service", () => {
       await expect(
         deleteExplorerEntry({ root, relativePath: "../outside" }),
       ).resolves.toMatchObject({ status: "error" });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("getUpdatableFileInfo", () => {
+  it("reports an existing file with its size and mime type", async () => {
+    const root = await createTempDir("updatable-info-");
+    try {
+      await writeFile(path.join(root, "notes.txt"), "hello");
+
+      const info = await getUpdatableFileInfo({ root, relativePath: "notes.txt" });
+
+      expect(info.exists).toBe(true);
+      expect(info.size).toBe(5);
+      expect(info.fileName).toBe("notes.txt");
+      expect(info.absolutePath).toBe(path.join(root, "notes.txt"));
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("reports a missing file without throwing", async () => {
+    const root = await createTempDir("updatable-missing-");
+    try {
+      const info = await getUpdatableFileInfo({ root, relativePath: "nope.txt" });
+
+      expect(info.exists).toBe(false);
+      expect(info.size).toBeNull();
+      expect(info.absolutePath).toBe(path.join(root, "nope.txt"));
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects paths escaping the workspace root", async () => {
+    const root = await createTempDir("updatable-escape-");
+    try {
+      await expect(
+        getUpdatableFileInfo({ root, relativePath: "../outside.txt" }),
+      ).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("streamExplorerFileWrite", () => {
+  it("creates a new file in a nested directory and returns revision info", async () => {
+    const root = await createTempDir("stream-write-create-");
+    try {
+      const source = async function* () {
+        yield new TextEncoder().encode("part one ");
+        yield new TextEncoder().encode("part two");
+      };
+
+      const result = await streamExplorerFileWrite({
+        root,
+        relativePath: "sub/dir/notes.txt",
+        source: source(),
+      });
+
+      expect(await readFile(path.join(root, "sub/dir/notes.txt"), "utf8")).toBe(
+        "part one part two",
+      );
+      expect(result.size).toBe(17);
+      expect(result.path).toBe("sub/dir/notes.txt");
+      expect(result.revision).toBeTruthy();
+      expect(result.modifiedAt).toBeTruthy();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("overwrites an existing binary file byte-for-byte", async () => {
+    const root = await createTempDir("stream-write-binary-");
+    try {
+      await writeFile(path.join(root, "blob.bin"), Buffer.from([1, 2, 3, 4]));
+      const payload = new Uint8Array([0, 255, 254, 1, 2]);
+      const source = async function* () {
+        yield payload;
+      };
+
+      const result = await streamExplorerFileWrite({
+        root,
+        relativePath: "blob.bin",
+        source: source(),
+      });
+
+      expect(Buffer.from(await readFile(path.join(root, "blob.bin")))).toEqual(
+        Buffer.from(payload),
+      );
+      expect(result.size).toBe(payload.byteLength);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("cleans up its temp file when the source stream fails", async () => {
+    const root = await createTempDir("stream-write-fail-");
+    try {
+      const source = async function* () {
+        yield new TextEncoder().encode("partial");
+        throw new Error("stream died");
+      };
+
+      await expect(
+        streamExplorerFileWrite({ root, relativePath: "notes.txt", source: source() }),
+      ).rejects.toThrow("stream died");
+
+      expect(existsSync(path.join(root, "notes.txt"))).toBe(false);
+      const leftovers = readdirSync(root).filter((name) => name.includes(".paseo-"));
+      expect(leftovers).toEqual([]);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
