@@ -676,9 +676,13 @@ export function FileExplorerPane({
         entry.kind === "directory" ? entry.path : parentExplorerPath(entry.path);
       try {
         for (const file of files) {
-          const targetPath = [targetDirectory, file.fileName].filter(Boolean).join("/");
+          const targetPath =
+            targetDirectory === "." ? file.fileName : `${targetDirectory}/${file.fileName}`;
           const existingEntry =
-            explorerDerived.directories.get(targetPath) ?? explorerDerived.files.get(targetPath);
+            explorerDerived.directories.get(targetPath) ??
+            explorerDerived.directories
+              .get(targetDirectory)
+              ?.entries.some((item) => item.path === targetPath);
           let overwrite = false;
           if (existingEntry) {
             const confirmed = await confirmDialog({
@@ -710,15 +714,7 @@ export function FileExplorerPane({
         toast.error(cause instanceof Error ? cause.message : String(cause));
       }
     },
-    [
-      explorerDerived.directories,
-      explorerDerived.files,
-      pickFiles,
-      requestDirectoryListing,
-      t,
-      toast,
-      uploadFile,
-    ],
+    [explorerDerived.directories, pickFiles, requestDirectoryListing, t, toast, uploadFile],
   );
 
   const handleNewEntry = useCallback(
