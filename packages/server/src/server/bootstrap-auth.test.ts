@@ -103,6 +103,30 @@ describe("daemon bearer auth", () => {
     }
   });
 
+  test("allows file updates with only a capability token when password is configured", async () => {
+    const daemonHandle = await createTestPaseoDaemon({
+      auth: { password: CORRECT_PASSWORD_HASH },
+    });
+    try {
+      // No bearer at all: the route is reachable, but the update token store
+      // rejects the request because no token was supplied (400, not 401).
+      const missingToken = await fetch(`http://127.0.0.1:${daemonHandle.port}/api/files/update`, {
+        method: "PUT",
+      });
+      expect(missingToken.status).toBe(400);
+
+      // An invalid token is rejected by the token store (403, not 401) — proving
+      // the token, not the daemon password, is what guards this route.
+      const invalidToken = await fetch(
+        `http://127.0.0.1:${daemonHandle.port}/api/files/update?token=invalid-token`,
+        { method: "PUT" },
+      );
+      expect(invalidToken.status).toBe(403);
+    } finally {
+      await daemonHandle.close();
+    }
+  });
+
   test("bypasses bearer auth for preflight and liveness endpoints", async () => {
     const daemonHandle = await createTestPaseoDaemon({
       auth: { password: CORRECT_PASSWORD_HASH },

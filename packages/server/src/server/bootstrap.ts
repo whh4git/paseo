@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer as createHTTPServer, type IncomingMessage, type ServerResponse } from "http";
 import { constants, existsSync, unlinkSync } from "fs";
-import { open } from "fs/promises";
+import { open, stat } from "fs/promises";
 import { randomUUID } from "node:crypto";
 import { hostname as getHostname } from "node:os";
 import path from "node:path";
@@ -123,6 +123,7 @@ import { createPaseoWorktree as createRegisteredPaseoWorktree } from "./paseo-wo
 import { createWorkspaceProvisioningService } from "./session/workspace-provisioning/workspace-provisioning-service.js";
 import { createPaseoWorktreeWorkflow } from "./worktree-session.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
+import { streamExplorerFileWrite } from "./file-explorer/service.js";
 import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/config.js";
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
@@ -221,6 +222,14 @@ const MAX_MCP_DEBUG_BATCH_ITEMS = 10;
 const REDACTED_LOG_VALUE = "[redacted]";
 const DOWNLOAD_OPEN_FLAGS =
   process.platform === "win32" ? constants.O_RDONLY : constants.O_RDONLY | constants.O_NOFOLLOW;
+
+// Mirrors the file-explorer service's private check so the update handler can
+// distinguish a missing target (the expected outcome of a create-style upload)
+// from a real stat failure, without trusting client input about the target.
+function isMissingEntryError(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return code === "ENOENT" || code === "ENOTDIR" || code === "ELOOP";
+}
 
 function formatHostForHttpUrl(host: string): string {
   return host.includes(":") && !host.startsWith("[") ? `[${host}]` : host;
@@ -674,7 +683,7 @@ export async function createPaseoDaemon(
     const origin = req.headers.origin;
     if (origin && (allowedOrigins.has("*") || allowedOrigins.has(origin))) {
       res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
       res.setHeader("Access-Control-Allow-Credentials", "true");
     }
@@ -691,6 +700,70 @@ export async function createPaseoDaemon(
     express.json(),
     createTerminalActivityRouteHandler(terminalManager),
   );
+
+  // Token-gated counterpart to GET /api/files/download: consumes a one-time
+  // update token issued over the WebSocket and streams the request body into
+  // the workspace. Registered before express.json() so uploads with a JSON
+  // content type are not parsed as JSON request bodies, and defined here
+  // rather than next to handleFileDownload below because const arrow functions
+  // do not hoist past this registration point.
+  const handleFileUpdate = async (req: express.Request, res: express.Response): Promise<void> => {
+    const token =
+      typeof req.query.token === "string" && req.query.token.trim().length > 0
+        ? req.query.token.trim()
+        : null;
+
+    if (!token) {
+      res.status(400).json({ error: "Missing update token" });
+      return;
+    }
+
+    const entry = downloadTokenStore.consumeToken(token);
+    if (!entry) {
+      res.status(403).json({ error: "Invalid or expired token" });
+      return;
+    }
+
+    try {
+      const targetStats = await stat(entry.absolutePath);
+      if (targetStats.isDirectory()) {
+        res.status(409).json({ error: "Target is not a file", path: entry.path });
+        return;
+      }
+      if (entry.overwrite !== true) {
+        res.status(409).json({
+          error: "Target already exists",
+          path: entry.path,
+          exists: true,
+          size: targetStats.size,
+          modifiedAt: targetStats.mtime.toISOString(),
+        });
+        return;
+      }
+    } catch (error) {
+      if (!isMissingEntryError(error)) {
+        logger.error({ err: error }, "Failed to stat update target");
+        res.status(500).json({ error: "Failed to write file" });
+        return;
+      }
+    }
+
+    try {
+      const result = await streamExplorerFileWrite({
+        root: path.dirname(entry.absolutePath),
+        relativePath: path.basename(entry.absolutePath),
+        source: req,
+      });
+      res.status(200).json({ ...result, path: entry.path });
+    } catch (err) {
+      logger.error({ err }, "Failed to update file");
+      res.status(500).json({ error: "Failed to write file" });
+    }
+  };
+
+  app.put("/api/files/update", (req, res) => {
+    void handleFileUpdate(req, res);
+  });
 
   // Serve the bundled browser web UI when enabled. Mounted after service-proxy
   // classification and host/CORS handling, but before daemon bearer auth, so
