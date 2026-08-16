@@ -414,6 +414,13 @@ export const en = {
       copyRelativePath: "Copy relative path",
       revealIn: "Reveal in {{target}}",
       download: "Download",
+      upload: "Upload",
+      confirmOverwrite: {
+        title: "Overwrite file?",
+        message: '"{{name}}" already exists. Replace it with the uploaded file?',
+        overwrite: "Overwrite",
+        cancel: "Cancel",
+      },
       addToChat: "Add to chat",
       moreActions: "More actions",
       newFile: "New file",

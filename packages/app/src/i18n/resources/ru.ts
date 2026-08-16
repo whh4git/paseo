@@ -418,6 +418,13 @@ export const ru: TranslationResources = {
       copyRelativePath: "Копировать относительный путь",
       revealIn: "Показать в {{target}}",
       download: "Скачать",
+      upload: "Загрузить",
+      confirmOverwrite: {
+        title: "Перезаписать файл?",
+        message: "Файл «{{name}}» уже существует. Заменить его загруженным файлом?",
+        overwrite: "Перезаписать",
+        cancel: "Отмена",
+      },
       addToChat: "Добавить в чат",
       moreActions: "Дополнительные действия",
       newFile: "Новый файл",

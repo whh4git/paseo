@@ -419,6 +419,13 @@ export const fr: TranslationResources = {
       copyRelativePath: "Copier le chemin relatif",
       revealIn: "Afficher dans {{target}}",
       download: "Télécharger",
+      upload: "Importer",
+      confirmOverwrite: {
+        title: "Remplacer le fichier ?",
+        message: "« {{name}} » existe déjà. Voulez-vous le remplacer par le fichier importé ?",
+        overwrite: "Remplacer",
+        cancel: "Annuler",
+      },
       addToChat: "Ajouter au chat",
       moreActions: "Plus de propositions",
       newFile: "Nouveau fichier",

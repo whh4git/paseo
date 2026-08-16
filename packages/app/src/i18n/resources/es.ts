@@ -419,6 +419,13 @@ export const es: TranslationResources = {
       copyRelativePath: "Copiar ruta relativa",
       revealIn: "Mostrar en {{target}}",
       download: "Descargar",
+      upload: "Subir",
+      confirmOverwrite: {
+        title: "¿Sobrescribir archivo?",
+        message: '"{{name}}" ya existe. ¿Reemplazarlo con el archivo subido?',
+        overwrite: "Sobrescribir",
+        cancel: "Cancelar",
+      },
       addToChat: "Añadir al chat",
       moreActions: "Más acciones",
       newFile: "Nuevo archivo",

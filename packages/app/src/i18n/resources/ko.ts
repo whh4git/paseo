@@ -416,6 +416,13 @@ export const ko: TranslationResources = {
       copyRelativePath: "상대 경로 복사",
       revealIn: "{{target}}에서 보기",
       download: "다운로드",
+      upload: "업로드",
+      confirmOverwrite: {
+        title: "파일을 덮어쓸까요?",
+        message: '"{{name}}" 파일이 이미 있습니다. 업로드한 파일로 바꿀까요?',
+        overwrite: "덮어쓰기",
+        cancel: "취소",
+      },
       addToChat: "채팅에 추가",
       moreActions: "추가 작업",
       newFile: "새 파일",

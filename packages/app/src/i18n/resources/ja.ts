@@ -419,6 +419,13 @@ export const ja: TranslationResources = {
       copyRelativePath: "相対パスをコピー",
       revealIn: "{{target}}で表示",
       download: "ダウンロード",
+      upload: "アップロード",
+      confirmOverwrite: {
+        title: "ファイルを上書きしますか？",
+        message: "「{{name}}」は既に存在します。アップロードしたファイルで置き換えますか？",
+        overwrite: "上書き",
+        cancel: "キャンセル",
+      },
       addToChat: "チャットに追加",
       moreActions: "その他のアクション",
       newFile: "新規ファイル",

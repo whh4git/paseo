@@ -415,6 +415,13 @@ export const ar: TranslationResources = {
       copyRelativePath: "نسخ المسار النسبي",
       revealIn: "إظهار في {{target}}",
       download: "تحميل",
+      upload: "رفع",
+      confirmOverwrite: {
+        title: "استبدال الملف؟",
+        message: 'الملف "{{name}}" موجود بالفعل. هل تريد استبداله بالملف المرفوع؟',
+        overwrite: "استبدال",
+        cancel: "إلغاء",
+      },
       addToChat: "إضافة إلى الدردشة",
       moreActions: "المزيد من الإجراءات",
       newFile: "ملف جديد",

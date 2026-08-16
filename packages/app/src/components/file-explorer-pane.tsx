@@ -62,12 +62,14 @@ import { useSessionStore } from "@/stores/session-store";
 import { FileActionsContextMenuContent } from "@/components/file-actions-menu";
 import { ContextMenu, ContextMenuTrigger, useContextMenu } from "@/components/ui/context-menu";
 import { useFileDownload } from "@/hooks/use-file-download";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import { useFilePicker } from "@/hooks/use-file-picker";
 import { useIsLocalDaemon } from "@/hooks/use-is-local-daemon";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
 import { buildWorkspaceExplorerStateKey } from "@/hooks/use-file-explorer-actions";
 import { usePanelStore, type ExpandedPathsUpdate, type SortOption } from "@/stores/panel-store";
 import { formatTimeAgo } from "@/utils/time";
-import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
+import { buildAbsoluteExplorerPath, parentExplorerPath } from "@/utils/explorer-paths";
 import { isHiddenExplorerPath } from "@/file-explorer/visibility";
 import {
   flattenExplorerTree,
@@ -131,6 +133,7 @@ interface TreeRowItemProps {
   onRevealEntry?: (entry: ExplorerEntry) => void;
   revealTargetName?: string;
   onDownloadEntry: (entry: ExplorerEntry) => void;
+  onUploadEntry: (entry: ExplorerEntry) => void;
   onAddToChat?: (path: string) => void;
   onNewEntry?: (parentPath: string, kind: "file" | "directory") => void;
   onCollapseDirectory?: (path: string) => void;
@@ -261,6 +264,7 @@ function TreeRowItem({
   onRevealEntry,
   revealTargetName,
   onDownloadEntry,
+  onUploadEntry,
   onAddToChat,
   onNewEntry,
   onCollapseDirectory,
@@ -315,6 +319,10 @@ function TreeRowItem({
   const handleDownload = useCallback(() => {
     onDownloadEntry(entry);
   }, [onDownloadEntry, entry]);
+
+  const handleUpload = useCallback(() => {
+    onUploadEntry?.(entry);
+  }, [onUploadEntry, entry]);
 
   const handleAddToChat = useCallback(() => {
     onAddToChat?.(entry.path);
@@ -406,6 +414,7 @@ function TreeRowItem({
         onReveal={onRevealEntry ? handleReveal : undefined}
         revealTargetName={revealTargetName}
         onDownload={handleDownload}
+        onUpload={handleUpload}
         onAddToChat={onAddToChat ? handleAddToChat : undefined}
         onNewFile={onNewEntry ? handleNewFile : undefined}
         onNewFolder={onNewEntry ? handleNewFolder : undefined}
@@ -486,6 +495,12 @@ export function FileExplorerPane({
     workspaceId,
     workspaceRoot: normalizedWorkspaceRoot,
   });
+  const uploadFile = useFileUpload({
+    serverId,
+    workspaceId,
+    workspaceRoot: normalizedWorkspaceRoot,
+  });
+  const { pickFiles } = useFilePicker();
   const sortOption = usePanelStore((state) => state.explorerSortOption);
   const showHiddenFiles = usePanelStore((state) => state.explorerShowHiddenFiles);
   const setSortOption = usePanelStore((state) => state.setExplorerSortOption);
@@ -649,6 +664,61 @@ export function FileExplorerPane({
       downloadFile({ fileName: entry.name, path: entry.path });
     },
     [downloadFile],
+  );
+
+  const handleUploadEntry = useCallback(
+    async (entry: ExplorerEntry) => {
+      const files = await pickFiles();
+      if (!files || files.length === 0) {
+        return;
+      }
+      const targetDirectory =
+        entry.kind === "directory" ? entry.path : parentExplorerPath(entry.path);
+      try {
+        for (const file of files) {
+          const targetPath = [targetDirectory, file.fileName].filter(Boolean).join("/");
+          const existingEntry =
+            explorerDerived.directories.get(targetPath) ?? explorerDerived.files.get(targetPath);
+          let overwrite = false;
+          if (existingEntry) {
+            const confirmed = await confirmDialog({
+              title: t("workspace.fileActions.confirmOverwrite.title"),
+              message: t("workspace.fileActions.confirmOverwrite.message", {
+                name: file.fileName,
+              }),
+              confirmLabel: t("workspace.fileActions.confirmOverwrite.overwrite"),
+              cancelLabel: t("common.actions.cancel"),
+            });
+            if (!confirmed) {
+              continue;
+            }
+            overwrite = true;
+          }
+          await uploadFile({
+            path: targetPath,
+            fileName: file.fileName,
+            bytes: file.bytes,
+            mimeType: file.mimeType,
+            overwrite,
+          });
+          await requestDirectoryListing(targetDirectory, {
+            recordHistory: false,
+            setCurrentPath: false,
+          });
+        }
+      } catch (cause) {
+        toast.error(cause instanceof Error ? cause.message : String(cause));
+      }
+    },
+    [
+      explorerDerived.directories,
+      explorerDerived.files,
+      pickFiles,
+      requestDirectoryListing,
+      t,
+      toast,
+      uploadFile,
+    ],
   );
 
   const handleNewEntry = useCallback(
@@ -995,6 +1065,7 @@ export function FileExplorerPane({
           onRevealEntry={fileManagerTarget ? handleRevealEntry : undefined}
           revealTargetName={fileManagerTarget?.label}
           onDownloadEntry={handleDownloadEntry}
+          onUploadEntry={handleUploadEntry}
           onAddToChat={onAddToChat}
           onNewEntry={fsEntryOpsEnabled ? handleNewEntry : undefined}
           onCollapseDirectory={handleCollapseDirectory}
@@ -1022,6 +1093,7 @@ export function FileExplorerPane({
       handleRenameEntry,
       handleRevealEntry,
       handleSelectEntry,
+      handleUploadEntry,
       isDirectoryLoading,
       fileManagerTarget,
       selectedEntryPath,
@@ -1355,6 +1427,7 @@ function deriveExplorerFields(state: AgentFileExplorerState | undefined) {
   return {
     directories:
       state?.directories ?? new Map<string, { path: string; entries: ExplorerEntry[] }>(),
+    files: state?.files ?? new Map(),
     pendingRequest: state?.pendingRequest ?? null,
     isExplorerLoading: state?.isLoading ?? false,
     error: state?.lastError ?? null,
@@ -1452,6 +1525,7 @@ function TreeRowDispatcher({
   onRevealEntry,
   revealTargetName,
   onDownloadEntry,
+  onUploadEntry,
   onAddToChat,
   onNewEntry,
   onCollapseDirectory,
@@ -1473,6 +1547,7 @@ function TreeRowDispatcher({
   onRevealEntry?: (entry: ExplorerEntry) => void;
   revealTargetName?: string;
   onDownloadEntry: (entry: ExplorerEntry) => void;
+  onUploadEntry: (entry: ExplorerEntry) => void;
   onAddToChat?: (path: string) => void;
   onNewEntry?: (parentPath: string, kind: "file" | "directory") => void;
   onCollapseDirectory?: (path: string) => void;
@@ -1503,6 +1578,7 @@ function TreeRowDispatcher({
       onRevealEntry={onRevealEntry}
       revealTargetName={revealTargetName}
       onDownloadEntry={onDownloadEntry}
+      onUploadEntry={onUploadEntry}
       onAddToChat={onAddToChat}
       onNewEntry={onNewEntry}
       onCollapseDirectory={onCollapseDirectory}

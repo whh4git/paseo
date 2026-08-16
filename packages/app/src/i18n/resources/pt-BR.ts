@@ -419,6 +419,13 @@ export const ptBR: TranslationResources = {
       copyRelativePath: "Copiar caminho relativo",
       revealIn: "Mostrar no {{target}}",
       download: "Baixar",
+      upload: "Enviar",
+      confirmOverwrite: {
+        title: "Sobrescrever arquivo?",
+        message: '"{{name}}" já existe. Substituí-lo pelo arquivo enviado?',
+        overwrite: "Sobrescrever",
+        cancel: "Cancelar",
+      },
       addToChat: "Adicionar ao chat",
       moreActions: "Mais ações",
       newFile: "Novo arquivo",

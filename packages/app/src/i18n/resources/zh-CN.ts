@@ -415,6 +415,13 @@ export const zhCN: TranslationResources = {
       copyRelativePath: "复制相对路径",
       revealIn: "在 {{target}} 中显示",
       download: "下载",
+      upload: "上传",
+      confirmOverwrite: {
+        title: "覆盖文件？",
+        message: "“{{name}}”已存在。是否用上传的文件替换它？",
+        overwrite: "覆盖",
+        cancel: "取消",
+      },
       addToChat: "添加到聊天",
       moreActions: "更多操作",
       newFile: "新建文件",

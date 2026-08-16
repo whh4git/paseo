@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
   Undo2,
+  Upload,
   type LucideIcon,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -44,6 +45,7 @@ interface FileActionsContextMenuContentProps {
   onReveal?: () => void;
   revealTargetName?: string;
   onDownload?: () => void;
+  onUpload?: () => void;
   onAddToChat?: () => void;
   onNewFile?: () => void;
   onNewFolder?: () => void;
@@ -70,6 +72,7 @@ export function FileActionsContextMenuContent({
   onReveal,
   revealTargetName,
   onDownload,
+  onUpload,
   onAddToChat,
   onNewFile,
   onNewFolder,
@@ -165,6 +168,14 @@ export function FileActionsContextMenuContent({
             onSelect: onDownload,
           }
         : null,
+      onUpload
+        ? {
+            key: "upload",
+            label: t("workspace.fileActions.upload"),
+            icon: Upload,
+            onSelect: onUpload,
+          }
+        : null,
       availableFile && onAddToChat
         ? {
             key: "add-to-chat",
@@ -217,6 +228,7 @@ export function FileActionsContextMenuContent({
     onRename,
     onReveal,
     onRevert,
+    onUpload,
     revealTargetName,
     t,
     testIDPrefix,
