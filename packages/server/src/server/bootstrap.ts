@@ -749,9 +749,20 @@ export async function createPaseoDaemon(
     }
 
     try {
+      // The target's parent directory may not exist yet (mkdir -p semantics),
+      // and resolveScopedPath realpaths the root it is given, so walk up to
+      // the nearest existing ancestor and write beneath it.
+      let root = path.dirname(entry.absolutePath);
+      while (!existsSync(root)) {
+        const parent = path.dirname(root);
+        if (parent === root) {
+          break;
+        }
+        root = parent;
+      }
       const result = await streamExplorerFileWrite({
-        root: path.dirname(entry.absolutePath),
-        relativePath: path.basename(entry.absolutePath),
+        root,
+        relativePath: path.relative(root, entry.absolutePath),
         source: req,
       });
       res.status(200).json({ ...result, path: entry.path });
