@@ -509,6 +509,86 @@ describe("WorkspaceFilesSession", () => {
     ]);
   });
 
+  describe("handleFileUpdateTokenRequest", () => {
+    test("issues a token carrying overwrite and target exists state", async () => {
+      const cwd = makeDir("file-update-token-");
+      writeFileSync(join(cwd, "notes.txt"), "existing");
+      const { subsystem, emitted } = makeSubsystem();
+
+      await subsystem.handleFileUpdateTokenRequest({
+        type: "file_update_token_request",
+        cwd,
+        path: "notes.txt",
+        overwrite: true,
+        requestId: "req-update-1",
+      });
+
+      const response = emitted.find(
+        (message) => message.type === "file_update_token_response",
+      ) as Extract<SessionOutboundMessage, { type: "file_update_token_response" }>;
+      expect(response).toBeDefined();
+      expect(response.payload.token).toBeTruthy();
+      expect(response.payload.exists).toBe(true);
+      expect(response.payload.size).toBe(8);
+      expect(response.payload.error).toBeNull();
+      expect(response.payload.fileName).toBe("notes.txt");
+    });
+
+    test("reports missing targets with exists false", async () => {
+      const cwd = makeDir("file-update-missing-");
+      const { subsystem, emitted } = makeSubsystem();
+
+      await subsystem.handleFileUpdateTokenRequest({
+        type: "file_update_token_request",
+        cwd,
+        path: "new.txt",
+        requestId: "req-update-2",
+      });
+
+      const response = emitted.find(
+        (message) => message.type === "file_update_token_response",
+      ) as Extract<SessionOutboundMessage, { type: "file_update_token_response" }>;
+      expect(response.payload.token).toBeTruthy();
+      expect(response.payload.exists).toBe(false);
+      expect(response.payload.size).toBeNull();
+    });
+
+    test("rejects paths outside the workspace cwd", async () => {
+      const cwd = makeDir("file-update-escape-");
+      const { subsystem, emitted } = makeSubsystem();
+
+      await subsystem.handleFileUpdateTokenRequest({
+        type: "file_update_token_request",
+        cwd,
+        path: "../outside.txt",
+        requestId: "req-update-3",
+      });
+
+      const response = emitted.find(
+        (message) => message.type === "file_update_token_response",
+      ) as Extract<SessionOutboundMessage, { type: "file_update_token_response" }>;
+      expect(response.payload.token).toBeNull();
+      expect(response.payload.error).toBeTruthy();
+    });
+
+    test("rejects an empty cwd", async () => {
+      const { subsystem, emitted } = makeSubsystem();
+
+      await subsystem.handleFileUpdateTokenRequest({
+        type: "file_update_token_request",
+        cwd: " ",
+        path: "notes.txt",
+        requestId: "req-update-4",
+      });
+
+      const response = emitted.find(
+        (message) => message.type === "file_update_token_response",
+      ) as Extract<SessionOutboundMessage, { type: "file_update_token_response" }>;
+      expect(response.payload.token).toBeNull();
+      expect(response.payload.error).toBe("cwd is required");
+    });
+  });
+
   test("responds to a project icon request", async () => {
     const cwd = makeDir("workspace-files-icon-");
     const { subsystem, emitted } = makeSubsystem();

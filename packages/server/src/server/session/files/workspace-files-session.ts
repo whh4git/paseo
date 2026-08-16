@@ -15,6 +15,7 @@ import type {
   FileUploadRequest,
   FileSubscribeRequest,
   FileUnsubscribeRequest,
+  FileUpdateTokenRequest,
   FileWriteRequest,
   SessionInboundMessage,
   SessionOutboundMessage,
@@ -26,6 +27,7 @@ import {
   deleteExplorerEntry,
   duplicateExplorerEntry,
   getDownloadableFileInfo,
+  getUpdatableFileInfo,
   listDirectoryEntries,
   readExplorerFile,
   renameExplorerEntry,
@@ -448,6 +450,83 @@ export class WorkspaceFilesSession {
           token: null,
           fileName: null,
           mimeType: null,
+          size: null,
+          error: getErrorMessage(error),
+          requestId,
+        },
+      });
+    }
+  }
+
+  async handleFileUpdateTokenRequest(request: FileUpdateTokenRequest): Promise<void> {
+    const { cwd: workspaceCwd, path: requestedPath, overwrite, requestId } = request;
+    const cwd = workspaceCwd.trim();
+    if (!cwd) {
+      this.host.emit({
+        type: "file_update_token_response",
+        payload: {
+          cwd: workspaceCwd,
+          path: requestedPath,
+          token: null,
+          fileName: null,
+          mimeType: null,
+          exists: null,
+          size: null,
+          error: "cwd is required",
+          requestId,
+        },
+      });
+      return;
+    }
+
+    this.logger.debug(
+      { cwd, path: requestedPath, overwrite },
+      `Handling file update token request for workspace ${cwd} (${requestedPath})`,
+    );
+
+    try {
+      const info = await getUpdatableFileInfo({
+        root: cwd,
+        relativePath: requestedPath,
+      });
+
+      const entry = this.downloadTokenStore.issueToken({
+        path: info.path,
+        absolutePath: info.absolutePath,
+        fileName: info.fileName,
+        mimeType: info.mimeType,
+        size: info.size ?? 0,
+        overwrite: overwrite === true,
+      });
+
+      this.host.emit({
+        type: "file_update_token_response",
+        payload: {
+          cwd,
+          path: info.path,
+          token: entry.token,
+          fileName: entry.fileName,
+          mimeType: entry.mimeType,
+          exists: info.exists,
+          size: info.size,
+          error: null,
+          requestId,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        { err: error, cwd, path: requestedPath },
+        `Failed to issue file update token for workspace ${cwd}`,
+      );
+      this.host.emit({
+        type: "file_update_token_response",
+        payload: {
+          cwd,
+          path: requestedPath,
+          token: null,
+          fileName: null,
+          mimeType: null,
+          exists: null,
           size: null,
           error: getErrorMessage(error),
           requestId,
