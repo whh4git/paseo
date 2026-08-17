@@ -38,9 +38,12 @@ test("uploads a local file into a workspace folder and lists it", async ({ page 
   const localFile = path.join(localDir, "local-upload.txt");
   writeFileSync(localFile, "uploaded from the browser", "utf8");
 
+  const chooserPromise = page.waitForEvent("filechooser");
   await page.getByTestId(/file-explorer-row-\d+-upload$/).click();
-  await page.locator('input[type="file"]').setInputFiles(localFile);
+  const chooser = await chooserPromise;
+  await chooser.setFiles(localFile);
 
+  await uploadsFolder.click();
   await expect(tree.getByText("local-upload.txt", { exact: true })).toBeVisible();
   expect(
     readFileSync(path.join(workspace.workspaceDirectory, "uploads", "local-upload.txt"), "utf8"),
