@@ -123,7 +123,7 @@ import { createPaseoWorktree as createRegisteredPaseoWorktree } from "./paseo-wo
 import { createWorkspaceProvisioningService } from "./session/workspace-provisioning/workspace-provisioning-service.js";
 import { createPaseoWorktreeWorkflow } from "./worktree-session.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
-import { streamExplorerFileWrite } from "./file-explorer/service.js";
+import { isMissingEntryError, streamExplorerFileWrite } from "./file-explorer/service.js";
 import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/config.js";
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
@@ -222,14 +222,6 @@ const MAX_MCP_DEBUG_BATCH_ITEMS = 10;
 const REDACTED_LOG_VALUE = "[redacted]";
 const DOWNLOAD_OPEN_FLAGS =
   process.platform === "win32" ? constants.O_RDONLY : constants.O_RDONLY | constants.O_NOFOLLOW;
-
-// Mirrors the file-explorer service's private check so the update handler can
-// distinguish a missing target (the expected outcome of a create-style upload)
-// from a real stat failure, without trusting client input about the target.
-function isMissingEntryError(error: unknown): boolean {
-  const code = (error as NodeJS.ErrnoException | null)?.code;
-  return code === "ENOENT" || code === "ENOTDIR" || code === "ELOOP";
-}
 
 function formatHostForHttpUrl(host: string): string {
   return host.includes(":") && !host.startsWith("[") ? `[${host}]` : host;

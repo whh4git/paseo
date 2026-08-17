@@ -1658,6 +1658,11 @@ export const fr: TranslationResources = {
     shareFile: "Partager un fichier",
     shareFileNamed: "Partager{{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "L'espace de travail n'est pas disponible.",
+    hostUnavailable: "L'hôte de téléversement n'est pas disponible.",
+    requestTokenFailed: "Échec de la demande du jeton de téléversement.",
+  },
   menu: {
     backdrop: "Toile de fond du menu",
   },

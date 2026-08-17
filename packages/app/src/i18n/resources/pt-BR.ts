@@ -1640,6 +1640,11 @@ export const ptBR: TranslationResources = {
     shareFile: "Compartilhar arquivo",
     shareFileNamed: "Compartilhar {{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "O workspace não está disponível.",
+    hostUnavailable: "Host de upload indisponível.",
+    requestTokenFailed: "Falha ao solicitar token de upload.",
+  },
   menu: {
     backdrop: "Fundo do menu",
   },

@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useHosts } from "@/runtime/host-runtime";
 import { resolveDaemonDownloadTarget } from "@/stores/download-store";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
@@ -27,6 +28,7 @@ export function useFileUpload({
   overwrite: boolean;
 }) => Promise<{ path: string; size: number; modifiedAt: string; revision: string }> {
   const daemons = useHosts();
+  const { t } = useTranslation();
   const daemonProfile = useMemo(
     () => daemons.find((daemon) => daemon.serverId === serverId),
     [daemons, serverId],
@@ -45,11 +47,11 @@ export function useFileUpload({
   return useCallback(
     async (input) => {
       if (!workspaceScopeId) {
-        throw new Error("Workspace is not available.");
+        throw new Error(t("uploads.workspaceUnavailable"));
       }
       const downloadTarget = resolveDaemonDownloadTarget(daemonProfile);
       if (!downloadTarget.baseUrl) {
-        throw new Error("Upload host is unavailable.");
+        throw new Error(t("uploads.hostUnavailable"));
       }
       return uploadExplorerFile({
         requestFileUpdateToken: (path, overwrite) =>
@@ -68,6 +70,6 @@ export function useFileUpload({
         overwrite: input.overwrite,
       });
     },
-    [daemonProfile, requestFileUpdateToken, workspaceScopeId],
+    [daemonProfile, requestFileUpdateToken, t, workspaceScopeId],
   );
 }

@@ -1627,6 +1627,11 @@ export const ja: TranslationResources = {
     shareFile: "ファイルを共有",
     shareFileNamed: "{{fileName}}を共有",
   },
+  uploads: {
+    workspaceUnavailable: "ワークスペースが利用できません。",
+    hostUnavailable: "アップロードホストが利用できません。",
+    requestTokenFailed: "アップロードトークンのリクエストに失敗しました。",
+  },
   menu: {
     backdrop: "メニューの背景",
   },

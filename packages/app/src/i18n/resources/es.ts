@@ -1654,6 +1654,11 @@ export const es: TranslationResources = {
     shareFile: "compartir archivo",
     shareFileNamed: "Compartir{{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "El espacio de trabajo no está disponible.",
+    hostUnavailable: "El host de carga no está disponible.",
+    requestTokenFailed: "No se pudo solicitar el token de carga.",
+  },
   menu: {
     backdrop: "Fondo del menú",
   },

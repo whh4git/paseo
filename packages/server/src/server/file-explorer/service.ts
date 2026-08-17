@@ -972,7 +972,8 @@ async function buildEntryPayload({
   };
 }
 
-function isMissingEntryError(error: unknown): boolean {
+/** Returns true when the error indicates the target path does not exist. */
+export function isMissingEntryError(error: unknown): boolean {
   const code = (error as NodeJS.ErrnoException | null)?.code;
   return code === "ENOENT" || code === "ENOTDIR" || code === "ELOOP";
 }

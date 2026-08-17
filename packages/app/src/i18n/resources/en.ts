@@ -1622,6 +1622,11 @@ export const en = {
     shareFile: "Share file",
     shareFileNamed: "Share {{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "Workspace is not available.",
+    hostUnavailable: "Upload host is unavailable.",
+    requestTokenFailed: "Failed to request upload token.",
+  },
   menu: {
     backdrop: "Menu backdrop",
   },

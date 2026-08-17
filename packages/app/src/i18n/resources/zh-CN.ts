@@ -1591,6 +1591,11 @@ export const zhCN: TranslationResources = {
     shareFile: "共享文件",
     shareFileNamed: "共享 {{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "工作区不可用。",
+    hostUnavailable: "上传 Host 不可用。",
+    requestTokenFailed: "请求上传 token 失败。",
+  },
   menu: {
     backdrop: "菜单背景",
   },

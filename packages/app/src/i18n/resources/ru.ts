@@ -1645,6 +1645,11 @@ export const ru: TranslationResources = {
     shareFile: "Поделиться файлом",
     shareFileNamed: "Поделиться {{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "Рабочая область недоступна.",
+    hostUnavailable: "Хост отправки недоступен.",
+    requestTokenFailed: "Не удалось запросить токен отправки.",
+  },
   menu: {
     backdrop: "Фон меню",
   },

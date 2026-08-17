@@ -1611,6 +1611,11 @@ export const ar: TranslationResources = {
     shareFile: "مشاركة الملف",
     shareFileNamed: "مشاركة{{fileName}}",
   },
+  uploads: {
+    workspaceUnavailable: "مساحة العمل غير متاحة.",
+    hostUnavailable: "مضيف الرفع غير متاح.",
+    requestTokenFailed: "فشل طلب رمز الرفع.",
+  },
   menu: {
     backdrop: "خلفية القائمة",
   },

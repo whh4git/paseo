@@ -1423,7 +1423,6 @@ function deriveExplorerFields(state: AgentFileExplorerState | undefined) {
   return {
     directories:
       state?.directories ?? new Map<string, { path: string; entries: ExplorerEntry[] }>(),
-    files: state?.files ?? new Map(),
     pendingRequest: state?.pendingRequest ?? null,
     isExplorerLoading: state?.isLoading ?? false,
     error: state?.lastError ?? null,

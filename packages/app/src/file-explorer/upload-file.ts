@@ -1,3 +1,5 @@
+import { i18n } from "@/i18n/i18next";
+
 export function buildUpdateUrl(baseUrl: string, token: string): string {
   const url = new URL("/api/files/update", baseUrl);
   url.searchParams.set("token", token);
@@ -27,7 +29,7 @@ export async function uploadExplorerFile(input: {
 }): Promise<{ path: string; size: number; modifiedAt: string; revision: string }> {
   const tokenResponse = await input.requestFileUpdateToken(input.path, input.overwrite);
   if (tokenResponse.error || !tokenResponse.token) {
-    throw new Error(tokenResponse.error ?? "Failed to request upload token.");
+    throw new Error(tokenResponse.error ?? i18n.t("uploads.requestTokenFailed"));
   }
 
   const response = await fetch(buildUpdateUrl(input.baseUrl, tokenResponse.token), {
