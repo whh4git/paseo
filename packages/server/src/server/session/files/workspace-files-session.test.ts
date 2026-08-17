@@ -509,8 +509,7 @@ describe("WorkspaceFilesSession", () => {
     ]);
   });
 
-  describe("handleFileUpdateTokenRequest", () => {
-    test("issues a token carrying overwrite and target exists state", async () => {
+  test("issues an update token carrying overwrite and target exists state", async () => {
       const cwd = makeDir("file-update-token-");
       writeFileSync(join(cwd, "notes.txt"), "existing");
       const { subsystem, emitted } = makeSubsystem();
@@ -534,7 +533,7 @@ describe("WorkspaceFilesSession", () => {
       expect(response.payload.fileName).toBe("notes.txt");
     });
 
-    test("reports missing targets with exists false", async () => {
+  test("reports update token missing targets with exists false", async () => {
       const cwd = makeDir("file-update-missing-");
       const { subsystem, emitted } = makeSubsystem();
 
@@ -553,7 +552,7 @@ describe("WorkspaceFilesSession", () => {
       expect(response.payload.size).toBeNull();
     });
 
-    test("rejects paths outside the workspace cwd", async () => {
+  test("rejects update token paths outside the workspace cwd", async () => {
       const cwd = makeDir("file-update-escape-");
       const { subsystem, emitted } = makeSubsystem();
 
@@ -571,7 +570,7 @@ describe("WorkspaceFilesSession", () => {
       expect(response.payload.error).toBeTruthy();
     });
 
-    test("rejects an empty cwd", async () => {
+  test("rejects an empty cwd for update tokens", async () => {
       const { subsystem, emitted } = makeSubsystem();
 
       await subsystem.handleFileUpdateTokenRequest({
@@ -587,7 +586,6 @@ describe("WorkspaceFilesSession", () => {
       expect(response.payload.token).toBeNull();
       expect(response.payload.error).toBe("cwd is required");
     });
-  });
 
   test("responds to a project icon request", async () => {
     const cwd = makeDir("workspace-files-icon-");
