@@ -1,6 +1,5 @@
-import type { DesktopDialogBridge } from "@/desktop/host";
+import type { DesktopDialogBridge, DesktopPickedFile } from "@/desktop/host";
 import { RASTER_IMAGE_FILE_EXTENSIONS, resolveRasterImageMimeType } from "@/attachments/file-types";
-import { getFileNameFromPath } from "@/attachments/utils";
 import { i18n } from "@/i18n/i18next";
 import { isAbsolutePath } from "@/utils/path";
 
@@ -86,7 +85,9 @@ export async function normalizePickedImageAssets(
   );
 }
 
-function normalizeDesktopDialogSelection(selection: string | string[] | null): string[] {
+function normalizeDesktopDialogSelection(
+  selection: DesktopPickedFile | DesktopPickedFile[] | null,
+): DesktopPickedFile[] {
   if (!selection) {
     return [];
   }
@@ -113,7 +114,7 @@ export async function pickImagesWithDesktopDialog(
     throw new Error("Desktop dialog API is not available.");
   }
 
-  return normalizeDesktopDialogSelection(await dialogOpen(options)).map((path) => {
+  return normalizeDesktopDialogSelection(await dialogOpen(options)).map(({ path, name }) => {
     const mimeType = resolveRasterImageMimeType({ path });
     if (!mimeType) {
       throw new Error(`Unsupported image type for '${path}'.`);
@@ -121,7 +122,7 @@ export async function pickImagesWithDesktopDialog(
     return {
       source: { kind: "file_uri" as const, uri: path },
       mimeType,
-      fileName: getFileNameFromPath(path),
+      fileName: name,
     };
   });
 }

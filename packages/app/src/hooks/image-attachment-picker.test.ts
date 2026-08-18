@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { DesktopDialogBridge, DesktopDialogOpenOptions } from "@/desktop/host";
+import type {
+  DesktopDialogBridge,
+  DesktopDialogOpenOptions,
+  DesktopPickedFile,
+} from "@/desktop/host";
 import { normalizePickedImageAssets, pickImagesWithDesktopDialog } from "./image-attachment-picker";
 
-function fakeDialogReturning(selection: string | string[] | null): {
+function fakeDialogReturning(
+  selection: DesktopPickedFile | DesktopPickedFile[] | null,
+): {
   dialog: DesktopDialogBridge;
   recordedOptions: DesktopDialogOpenOptions[];
 } {
@@ -94,7 +100,10 @@ describe("image-attachment-picker", () => {
   });
 
   it("uses the desktop dialog api when available", async () => {
-    const { dialog, recordedOptions } = fakeDialogReturning(["/tmp/one.png", "/tmp/two.jpg"]);
+    const { dialog, recordedOptions } = fakeDialogReturning([
+      { path: "/tmp/one.png", name: "one.png" },
+      { path: "/tmp/two.jpg", name: "two.jpg" },
+    ]);
 
     const result = await pickImagesWithDesktopDialog(dialog);
 

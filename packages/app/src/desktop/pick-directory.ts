@@ -16,8 +16,8 @@ export async function pickDirectory(
   if (selection === null) {
     return null;
   }
-  if (typeof selection === "string") {
-    return selection;
+  if (!Array.isArray(selection) && typeof selection === "object") {
+    return selection.path;
   }
 
   throw new Error("Unexpected directory picker response.");

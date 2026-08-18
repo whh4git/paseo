@@ -4,11 +4,7 @@ import { File } from "expo-file-system";
 import { getDesktopHost, isElectronRuntime } from "@/desktop/host";
 import { isWeb } from "@/constants/platform";
 import { getMimeTypeFromPath } from "@/attachments/file-types";
-import {
-  baseNameFromPath,
-  readDesktopFileBytes,
-  type PickedFile,
-} from "@/attachments/picked-file";
+import { readDesktopFileBytes, type PickedFile } from "@/attachments/picked-file";
 
 async function pickFilesWithDesktopDialog(): Promise<PickedFile[] | null> {
   const dialog = getDesktopHost()?.dialog;
@@ -26,17 +22,17 @@ async function pickFilesWithDesktopDialog(): Promise<PickedFile[] | null> {
     return null;
   }
 
-  const paths = Array.isArray(selection) ? selection : [selection];
-  if (paths.length === 0) {
+  const picked = Array.isArray(selection) ? selection : [selection];
+  if (picked.length === 0) {
     return null;
   }
 
   const result: PickedFile[] = [];
 
-  for (const filePath of paths) {
-    const fileName = baseNameFromPath(filePath);
-    const mimeType = getMimeTypeFromPath(filePath);
-    const bytes = await readDesktopFileBytes(filePath);
+  for (const file of picked) {
+    const fileName = file.name;
+    const mimeType = getMimeTypeFromPath(file.path);
+    const bytes = await readDesktopFileBytes(file.path);
 
     result.push({ fileName, mimeType, bytes });
   }

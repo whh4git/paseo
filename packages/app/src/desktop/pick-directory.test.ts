@@ -10,7 +10,7 @@ describe("pickDirectory", () => {
         if (options) {
           recordedOptions.push(options);
         }
-        return "/repo/project";
+        return { path: "/repo/project", name: "project" };
       },
     };
 

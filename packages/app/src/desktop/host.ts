@@ -33,6 +33,13 @@ export interface DesktopDialogOpenOptions {
   }>;
 }
 
+export interface DesktopPickedFile {
+  /** Absolute path of the picked file. */
+  path: string;
+  /** Base file name (no directory components). */
+  name: string;
+}
+
 export interface DesktopDialogAskWithCheckboxOptions extends DesktopDialogAskOptions {
   checkboxLabel: string;
   checkboxChecked?: boolean;
@@ -49,7 +56,9 @@ export interface DesktopDialogBridge {
     message: string,
     options: DesktopDialogAskWithCheckboxOptions,
   ) => Promise<DesktopDialogAskWithCheckboxResult>;
-  open?: (options?: DesktopDialogOpenOptions) => Promise<string | string[] | null>;
+  open?: (
+    options?: DesktopDialogOpenOptions,
+  ) => Promise<DesktopPickedFile | DesktopPickedFile[] | null>;
 }
 
 export interface DesktopNotificationBridge {

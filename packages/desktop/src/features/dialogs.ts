@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import { dialog, ipcMain, BrowserWindow } from "electron";
 
 interface AskOptions {
@@ -78,6 +79,7 @@ export function registerDialogHandlers(): void {
     });
 
     if (result.canceled) return null;
-    return options?.multiple ? result.filePaths : (result.filePaths[0] ?? null);
+    const picked = result.filePaths.map((filePath) => ({ path: filePath, name: basename(filePath) }));
+    return options?.multiple ? picked : (picked[0] ?? null);
   });
 }
