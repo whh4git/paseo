@@ -489,6 +489,10 @@ export class WorkspaceFilesSession {
         root: cwd,
         relativePath: requestedPath,
       });
+      this.logger.info(
+        { cwd, requestedPath, path: info.path, absolutePath: info.absolutePath, overwrite },
+        "File update token issued",
+      );
 
       const entry = this.downloadTokenStore.issueToken({
         path: info.path,

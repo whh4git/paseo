@@ -715,6 +715,10 @@ export async function createPaseoDaemon(
       res.status(403).json({ error: "Invalid or expired token" });
       return;
     }
+    logger.info(
+      { path: entry.path, absolutePath: entry.absolutePath, overwrite: entry.overwrite },
+      "File update token consumed",
+    );
 
     try {
       const targetStats = await stat(entry.absolutePath);
@@ -752,6 +756,10 @@ export async function createPaseoDaemon(
         }
         root = parent;
       }
+      logger.info(
+        { root, relativePath: path.relative(root, entry.absolutePath), absolutePath: entry.absolutePath },
+        "File update writing target",
+      );
       const result = await streamExplorerFileWrite({
         root,
         relativePath: path.relative(root, entry.absolutePath),

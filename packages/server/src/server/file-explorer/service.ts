@@ -926,9 +926,16 @@ async function resolveScopedPath({
   const normalizedRoot = expandUserPath(root);
   const requestedPath = resolvePathFromBase(normalizedRoot, relativePath);
   const relative = path.relative(normalizedRoot, requestedPath);
+  const pathKind = (value: string): string =>
+    path.isAbsolute(value) ? "absolute" : "relative";
 
   if (relative !== "" && (relative.startsWith("..") || path.isAbsolute(relative))) {
-    throw new Error(ACCESS_OUTSIDE_WORKSPACE_MESSAGE);
+    throw new Error(
+      `${ACCESS_OUTSIDE_WORKSPACE_MESSAGE} (root=${JSON.stringify(root)}, ` +
+        `relativePath=${JSON.stringify(relativePath)}, normalizedRoot=${JSON.stringify(normalizedRoot)}, ` +
+        `requestedPath=${JSON.stringify(requestedPath)}, requestedKind=${pathKind(requestedPath)}, ` +
+        `relative=${JSON.stringify(relative)})`,
+    );
   }
 
   const realRoot = await fs.realpath(normalizedRoot);
@@ -937,7 +944,11 @@ async function resolveScopedPath({
     const realPath = await fs.realpath(requestedPath);
     const realRelative = path.relative(realRoot, realPath);
     if (realRelative !== "" && (realRelative.startsWith("..") || path.isAbsolute(realRelative))) {
-      throw new Error(ACCESS_OUTSIDE_WORKSPACE_MESSAGE);
+      throw new Error(
+        `${ACCESS_OUTSIDE_WORKSPACE_MESSAGE} (realpath check: realRoot=${JSON.stringify(realRoot)}, ` +
+          `realPath=${JSON.stringify(realPath)}, realRelative=${JSON.stringify(realRelative)}, ` +
+          `requestedPath=${JSON.stringify(requestedPath)})`,
+      );
     }
     return { requestedPath, resolvedPath: realPath };
   } catch (error) {
