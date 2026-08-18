@@ -8,6 +8,13 @@ export interface PickedFile {
   bytes: Uint8Array;
 }
 
+/** Extracts the base file name from a platform file path (POSIX or Windows). */
+export function baseNameFromPath(filePath: string): string {
+  const trimmed = filePath.replace(/[\\/]+$/, "");
+  const parts = trimmed.split(/[\\/]/);
+  return parts.pop() || filePath;
+}
+
 function base64ToUint8Array(base64: string): Uint8Array {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
