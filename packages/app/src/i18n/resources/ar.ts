@@ -621,6 +621,7 @@ export const ar: TranslationResources = {
         reloadingAgent: "وكيل إعادة التحميل...",
         reloadedAgent: "وكيل إعادة تحميل",
         failedToReloadAgent: "فشل في إعادة تحميل الوكيل",
+        failedToCloseAgent: "فشل في إغلاق الوكيل",
       },
       confirmations: {
         unsavedTitle: "تغييرات غير محفوظة",
@@ -2419,6 +2420,9 @@ export const ar: TranslationResources = {
         docsTooltip: "راجع المستندات لمزيد من التفاصيل ومتغيرات البيئة المتاحة لهذه الأوامر",
         setup: "يثبت",
         setupAccessibility: "أوامر إعداد شجرة العمل",
+        uncommittedTitle: "ثبّت تغييرات paseo.json",
+        uncommittedDescription:
+          "تستخدم أشجار العمل الجديدة نص الإعداد البرمجي من الفرع الأساسي الذي تحدده.",
         teardown: "هدم",
         teardownAccessibility: "أوامر هدم شجرة العمل",
       },

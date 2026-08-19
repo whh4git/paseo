@@ -93,7 +93,6 @@ const SORT_OPTIONS: { value: SortOption }[] = [
 ];
 
 const ThemedLoadingSpinner = withUnistyles(LoadingSpinner);
-const ThemedFolder = withUnistyles(Folder);
 const foregroundMutedColorMapping = (theme: Theme) => ({
   color: theme.colors.foregroundMuted,
 });
@@ -218,12 +217,9 @@ function EntryNameInputRow({
     <View style={[styles.entryRow, { paddingLeft: treeRowPaddingLeft(depth) }]}>
       <TreeIndentGuides depth={depth} />
       <View style={styles.entryInfo}>
-        <View style={styles.entryChevron}>
-          {kind === "directory" ? <TreeChevron expanded={false} /> : null}
-        </View>
         <View style={styles.entryIcon}>
           {kind === "directory" ? (
-            <ThemedFolder size={WORKSPACE_TREE_ICON_SIZE} uniProps={foregroundMutedColorMapping} />
+            <TreeChevron expanded={false} />
           ) : (
             <MaterialFileIcon fileName={name || "untitled"} size={WORKSPACE_TREE_ICON_SIZE} />
           )}
@@ -242,6 +238,7 @@ function EntryNameInputRow({
           }
           autoCapitalize="none"
           autoCorrect={false}
+          placeholderTextColor={styles.draftPlaceholder.color}
           style={styles.draftInput}
           selectTextOnFocus={Boolean(initialName)}
           testID="file-explorer-name-input"
@@ -391,15 +388,9 @@ function TreeRowItem({
       >
         <TreeIndentGuides depth={depth} />
         <View ref={dragSourceRef} style={styles.entryInfo}>
-          <View style={styles.entryChevron}>
-            {isDirectory ? <DirectoryChevronIcon loading={loading} expanded={isExpanded} /> : null}
-          </View>
           <View style={styles.entryIcon}>
             {isDirectory ? (
-              <ThemedFolder
-                size={WORKSPACE_TREE_ICON_SIZE}
-                uniProps={foregroundMutedColorMapping}
-              />
+              <DirectoryChevronIcon loading={loading} expanded={isExpanded} />
             ) : (
               <MaterialFileIcon fileName={entry.name} size={WORKSPACE_TREE_ICON_SIZE} />
             )}
@@ -1898,13 +1889,6 @@ const styles = StyleSheet.create((theme) => ({
     gap: WORKSPACE_TREE_ICON_LABEL_GAP,
     minWidth: 0,
   },
-  entryChevron: {
-    width: WORKSPACE_TREE_ICON_SIZE,
-    height: WORKSPACE_TREE_ICON_SIZE,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
   entryIcon: {
     width: WORKSPACE_TREE_ICON_SIZE,
     height: WORKSPACE_TREE_ICON_SIZE,
@@ -1924,6 +1908,9 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.sm,
     paddingVertical: 0,
     paddingHorizontal: 0,
+  },
+  draftPlaceholder: {
+    color: theme.colors.foregroundExtraMuted,
   },
   contextMetaBlock: {
     paddingVertical: theme.spacing[1],
