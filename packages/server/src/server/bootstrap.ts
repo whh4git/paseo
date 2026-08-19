@@ -715,7 +715,7 @@ export async function createPaseoDaemon(
       res.status(403).json({ error: "Invalid or expired token" });
       return;
     }
-    logger.info(
+    logger.debug(
       { path: entry.path, absolutePath: entry.absolutePath, overwrite: entry.overwrite },
       "File update token consumed",
     );
@@ -756,7 +756,7 @@ export async function createPaseoDaemon(
         }
         root = parent;
       }
-      logger.info(
+      logger.debug(
         { root, relativePath: path.relative(root, entry.absolutePath), absolutePath: entry.absolutePath },
         "File update writing target",
       );

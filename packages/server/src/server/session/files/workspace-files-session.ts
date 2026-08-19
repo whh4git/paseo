@@ -489,7 +489,7 @@ export class WorkspaceFilesSession {
         root: cwd,
         relativePath: requestedPath,
       });
-      this.logger.info(
+      this.logger.debug(
         { cwd, requestedPath, path: info.path, absolutePath: info.absolutePath, overwrite },
         "File update token issued",
       );
