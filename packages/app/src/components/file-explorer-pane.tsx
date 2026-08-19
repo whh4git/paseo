@@ -673,13 +673,14 @@ export function FileExplorerPane({
   );
 
   const uploadPickedFilesToTargetDirectory = useCallback(
-    async (targetDirectory: string, _suppressOverwritePrompt: boolean) => {
+    async (targetDirectory: string) => {
       const files = await pickFiles();
       if (!files || files.length === 0) {
         return;
       }
       try {
-        for (const file of files) {
+        for (let index = 0; index < files.length; index++) {
+          const file = files[index];
           const targetPath =
             targetDirectory === "." ? file.fileName : `${targetDirectory}/${file.fileName}`;
           const existingEntry =
@@ -712,7 +713,9 @@ export function FileExplorerPane({
               overwrite,
               onProgress: (progress) => updateUploadProgress(uploadId, progress),
             });
-            completeUpload(uploadId);
+            if (index === files.length - 1) {
+              completeUpload(uploadId);
+            }
           } catch (cause) {
             failUpload(uploadId, cause instanceof Error ? cause.message : String(cause));
             throw cause;
@@ -723,7 +726,7 @@ export function FileExplorerPane({
           });
         }
       } catch (cause) {
-        toast.error(cause instanceof Error ? cause.message : String(cause));
+        console.warn("[FileExplorer] Upload failed:", cause);
       }
     },
     [
@@ -731,7 +734,6 @@ export function FileExplorerPane({
       pickFiles,
       requestDirectoryListing,
       t,
-      toast,
       uploadFile,
       startUpload,
       updateUploadProgress,
@@ -745,13 +747,13 @@ export function FileExplorerPane({
       if (entry.kind !== "directory") {
         return;
       }
-      void uploadPickedFilesToTargetDirectory(entry.path, false);
+      void uploadPickedFilesToTargetDirectory(entry.path);
     },
     [uploadPickedFilesToTargetDirectory],
   );
 
   const handleUploadAtRoot = useCallback(() => {
-    void uploadPickedFilesToTargetDirectory(".", false);
+    void uploadPickedFilesToTargetDirectory(".");
   }, [uploadPickedFilesToTargetDirectory]);
 
   const handleNewEntry = useCallback(

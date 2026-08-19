@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, afterEach } from "vitest";
-import { buildUpdateUrl, uploadExplorerFile, type UploadProgress } from "./upload-file";
+import { buildUpdateUrl, uploadExplorerFile, type UploadProgressEvent } from "./upload-file";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -127,7 +127,7 @@ describe("uploadExplorerFile", () => {
       responseText: JSON.stringify({ path: "a.bin", size: 1, modifiedAt: "t", revision: "r" }),
       progressEvents: [0.25, 0.75],
     });
-    const progress: UploadProgress[] = [];
+    const progress: UploadProgressEvent[] = [];
 
     await uploadExplorerFile({
       requestFileUpdateToken,

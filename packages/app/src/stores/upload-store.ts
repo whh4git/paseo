@@ -4,6 +4,8 @@ export interface UploadProgress {
   percent: number;
   bytesWritten: number;
   totalBytes: number;
+  speed: number;
+  eta: number;
 }
 
 export interface Upload {
@@ -20,10 +22,11 @@ interface UploadState {
   activeUploadId: string | null;
 
   startUpload: (fileName: string) => string;
-  updateUploadProgress: (id: string, progress: UploadProgress) => void;
+  updateUploadProgress: (id: string, progress: Omit<UploadProgress, "speed" | "eta">) => void;
   completeUpload: (id: string) => void;
   failUpload: (id: string, message: string) => void;
   dismissUpload: (id: string) => void;
+  dismissAllCompleted: () => void;
 }
 
 function generateUploadId(): string {
@@ -56,8 +59,12 @@ export const useUploadStore = create<UploadState>()((set) => ({
       if (!upload || upload.status !== "uploading") {
         return state;
       }
+      const elapsed = (Date.now() - upload.startedAt) / 1000;
+      const speed = elapsed > 0 ? progress.bytesWritten / elapsed : 0;
+      const remaining = progress.totalBytes - progress.bytesWritten;
+      const eta = speed > 0 ? remaining / speed : 0;
       const uploads = new Map(state.uploads);
-      uploads.set(id, { ...upload, progress });
+      uploads.set(id, { ...upload, progress: { ...progress, speed, eta } });
       return { uploads };
     });
   },
@@ -69,7 +76,7 @@ export const useUploadStore = create<UploadState>()((set) => ({
         return state;
       }
       const uploads = new Map(state.uploads);
-      uploads.set(id, { ...upload, status: "complete", progress: { percent: 1, bytesWritten: 0, totalBytes: 0 } });
+      uploads.set(id, { ...upload, status: "complete" });
       return { uploads };
     });
   },
@@ -91,6 +98,20 @@ export const useUploadStore = create<UploadState>()((set) => ({
       const uploads = new Map(state.uploads);
       uploads.delete(id);
       const activeUploadId = state.activeUploadId === id ? null : state.activeUploadId;
+      return { uploads, activeUploadId };
+    });
+  },
+
+  dismissAllCompleted: () => {
+    set((state) => {
+      const uploads = new Map(state.uploads);
+      for (const [id, upload] of uploads) {
+        if (upload.status !== "uploading") {
+          uploads.delete(id);
+        }
+      }
+      const activeUploadId =
+        state.activeUploadId && uploads.has(state.activeUploadId) ? state.activeUploadId : null;
       return { uploads, activeUploadId };
     });
   },

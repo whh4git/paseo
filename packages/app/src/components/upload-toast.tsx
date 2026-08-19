@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Check, X, XCircle } from "lucide-react-native";
 import { useUploadStore, type Upload } from "@/stores/upload-store";
+import { formatSpeed, formatEta } from "@/stores/download-store";
 import { SPACING } from "@/styles/theme";
 import type { Theme } from "@/styles/theme";
 
@@ -22,7 +23,7 @@ const ThemedLoadingSpinner = withUnistyles(LoadingSpinner);
 function getUploadStatusText(upload: Upload, t: ReturnType<typeof useTranslation>["t"]): string {
   if (upload.status === "uploading") {
     if (upload.progress) {
-      return `${Math.round(upload.progress.percent * 100)}%`;
+      return `${Math.round(upload.progress.percent * 100)}% · ${formatSpeed(upload.progress.speed)} · ${formatEta(upload.progress.eta)}`;
     }
     return t("uploads.uploading");
   }

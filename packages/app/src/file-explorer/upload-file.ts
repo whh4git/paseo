@@ -6,7 +6,7 @@ export function buildUpdateUrl(baseUrl: string, token: string): string {
   return url.toString();
 }
 
-export interface UploadProgress {
+export interface UploadProgressEvent {
   percent: number;
   bytesWritten: number;
   totalBytes: number;
@@ -33,7 +33,7 @@ export async function uploadExplorerFile(input: {
   bytes: Uint8Array;
   mimeType: string;
   overwrite: boolean;
-  onProgress?: (progress: UploadProgress) => void;
+  onProgress?: (progress: UploadProgressEvent) => void;
 }): Promise<{ path: string; size: number; modifiedAt: string; revision: string }> {
   const tokenResponse = await input.requestFileUpdateToken(input.path, input.overwrite);
   if (tokenResponse.error || !tokenResponse.token) {
