@@ -32,7 +32,6 @@ import {
   Eye,
   EyeOff,
   FilePlus,
-  Folder,
   FolderPlus,
   Upload,
   RotateCw,
