@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHosts } from "@/runtime/host-runtime";
 import { resolveDaemonDownloadTarget } from "@/stores/download-store";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
-import { uploadExplorerFile } from "@/file-explorer/upload-file";
+import { uploadExplorerFile, type UploadProgress } from "@/file-explorer/upload-file";
 
 interface UseFileUploadParams {
   serverId: string;
@@ -26,6 +26,7 @@ export function useFileUpload({
   bytes: Uint8Array;
   mimeType: string;
   overwrite: boolean;
+  onProgress?: (progress: UploadProgress) => void;
 }) => Promise<{ path: string; size: number; modifiedAt: string; revision: string }> {
   const daemons = useHosts();
   const { t } = useTranslation();
@@ -68,6 +69,7 @@ export function useFileUpload({
         bytes: input.bytes,
         mimeType: input.mimeType,
         overwrite: input.overwrite,
+        onProgress: input.onProgress,
       });
     },
     [daemonProfile, requestFileUpdateToken, t, workspaceScopeId],

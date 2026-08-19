@@ -34,6 +34,7 @@ import {
   FilePlus,
   Folder,
   FolderPlus,
+  Upload,
   RotateCw,
 } from "lucide-react-native";
 import { MaterialFileIcon } from "@/components/material-file-icon";
@@ -63,13 +64,14 @@ import { FileActionsContextMenuContent } from "@/components/file-actions-menu";
 import { ContextMenu, ContextMenuTrigger, useContextMenu } from "@/components/ui/context-menu";
 import { useFileDownload } from "@/hooks/use-file-download";
 import { useFileUpload } from "@/hooks/use-file-upload";
+import { useUploadStore } from "@/stores/upload-store";
 import { useFilePicker } from "@/hooks/use-file-picker";
 import { useIsLocalDaemon } from "@/hooks/use-is-local-daemon";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
 import { buildWorkspaceExplorerStateKey } from "@/hooks/use-file-explorer-actions";
 import { usePanelStore, type ExpandedPathsUpdate, type SortOption } from "@/stores/panel-store";
 import { formatTimeAgo } from "@/utils/time";
-import { buildAbsoluteExplorerPath, parentExplorerPath } from "@/utils/explorer-paths";
+import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
 import { isHiddenExplorerPath } from "@/file-explorer/visibility";
 import {
   flattenExplorerTree,
@@ -414,7 +416,7 @@ function TreeRowItem({
         onReveal={onRevealEntry ? handleReveal : undefined}
         revealTargetName={revealTargetName}
         onDownload={handleDownload}
-        onUpload={handleUpload}
+        onUpload={entry.kind === "directory" ? handleUpload : undefined}
         onAddToChat={onAddToChat ? handleAddToChat : undefined}
         onNewFile={onNewEntry ? handleNewFile : undefined}
         onNewFolder={onNewEntry ? handleNewFolder : undefined}
@@ -500,6 +502,10 @@ export function FileExplorerPane({
     workspaceId,
     workspaceRoot: normalizedWorkspaceRoot,
   });
+  const startUpload = useUploadStore((state) => state.startUpload);
+  const updateUploadProgress = useUploadStore((state) => state.updateUploadProgress);
+  const completeUpload = useUploadStore((state) => state.completeUpload);
+  const failUpload = useUploadStore((state) => state.failUpload);
   const { pickFiles } = useFilePicker();
   const sortOption = usePanelStore((state) => state.explorerSortOption);
   const showHiddenFiles = usePanelStore((state) => state.explorerShowHiddenFiles);
@@ -666,14 +672,12 @@ export function FileExplorerPane({
     [downloadFile],
   );
 
-  const handleUploadEntry = useCallback(
-    async (entry: ExplorerEntry) => {
+  const uploadPickedFilesToTargetDirectory = useCallback(
+    async (targetDirectory: string, _suppressOverwritePrompt: boolean) => {
       const files = await pickFiles();
       if (!files || files.length === 0) {
         return;
       }
-      const targetDirectory =
-        entry.kind === "directory" ? entry.path : parentExplorerPath(entry.path);
       try {
         for (const file of files) {
           const targetPath =
@@ -698,13 +702,21 @@ export function FileExplorerPane({
             }
             overwrite = true;
           }
-          await uploadFile({
-            path: targetPath,
-            fileName: file.fileName,
-            bytes: file.bytes,
-            mimeType: file.mimeType,
-            overwrite,
-          });
+          const uploadId = startUpload(file.fileName);
+          try {
+            await uploadFile({
+              path: targetPath,
+              fileName: file.fileName,
+              bytes: file.bytes,
+              mimeType: file.mimeType,
+              overwrite,
+              onProgress: (progress) => updateUploadProgress(uploadId, progress),
+            });
+            completeUpload(uploadId);
+          } catch (cause) {
+            failUpload(uploadId, cause instanceof Error ? cause.message : String(cause));
+            throw cause;
+          }
           await requestDirectoryListing(targetDirectory, {
             recordHistory: false,
             setCurrentPath: false,
@@ -714,8 +726,33 @@ export function FileExplorerPane({
         toast.error(cause instanceof Error ? cause.message : String(cause));
       }
     },
-    [explorerDerived.directories, pickFiles, requestDirectoryListing, t, toast, uploadFile],
+    [
+      explorerDerived.directories,
+      pickFiles,
+      requestDirectoryListing,
+      t,
+      toast,
+      uploadFile,
+      startUpload,
+      updateUploadProgress,
+      completeUpload,
+      failUpload,
+    ],
   );
+
+  const handleUploadEntry = useCallback(
+    (entry: ExplorerEntry) => {
+      if (entry.kind !== "directory") {
+        return;
+      }
+      void uploadPickedFilesToTargetDirectory(entry.path, false);
+    },
+    [uploadPickedFilesToTargetDirectory],
+  );
+
+  const handleUploadAtRoot = useCallback(() => {
+    void uploadPickedFilesToTargetDirectory(".", false);
+  }, [uploadPickedFilesToTargetDirectory]);
 
   const handleNewEntry = useCallback(
     (parentPath: string, kind: "file" | "directory") => {
@@ -1138,6 +1175,7 @@ export function FileExplorerPane({
         showBackFromError={showBackFromError}
         listRows={listRows}
         onNewEntryAtRoot={fsEntryOpsEnabled ? handleNewEntry : undefined}
+        onUploadAtRoot={handleUploadAtRoot}
         currentSortLabel={currentSortLabel}
         isRefreshFetching={isRefreshFetching}
         treeListRef={treeListRef}
@@ -1212,6 +1250,7 @@ interface FileExplorerPaneContentProps {
   showBackFromError: boolean;
   listRows: ExplorerListRow[];
   onNewEntryAtRoot?: (parentPath: string, kind: "file" | "directory") => void;
+  onUploadAtRoot?: () => void;
   currentSortLabel: string;
   isRefreshFetching: boolean;
   treeListRef: RefObject<FlatList<ExplorerListRow> | null>;
@@ -1235,6 +1274,7 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
     showBackFromError,
     listRows,
     onNewEntryAtRoot,
+    onUploadAtRoot,
     currentSortLabel,
     isRefreshFetching,
     treeListRef,
@@ -1339,6 +1379,18 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
               >
                 <FolderPlus size={theme.iconSize.sm} color={theme.colors.foregroundMuted} />
               </Pressable>
+              {onUploadAtRoot ? (
+                <Pressable
+                  onPress={onUploadAtRoot}
+                  hitSlop={8}
+                  style={iconButtonStyleProp}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("workspace.fileActions.upload")}
+                  testID="files-upload"
+                >
+                  <Upload size={theme.iconSize.sm} color={theme.colors.foregroundMuted} />
+                </Pressable>
+              ) : null}
             </>
           ) : null}
           <Pressable
@@ -1411,6 +1463,7 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
             fileKind="directory"
             onNewFile={handleNewFileAtRoot}
             onNewFolder={handleNewFolderAtRoot}
+            onUpload={onUploadAtRoot}
             testIDPrefix="files-empty-area"
           />
         ) : null}

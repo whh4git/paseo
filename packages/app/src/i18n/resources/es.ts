@@ -1658,6 +1658,9 @@ export const es: TranslationResources = {
     workspaceUnavailable: "El espacio de trabajo no está disponible.",
     hostUnavailable: "El host de carga no está disponible.",
     requestTokenFailed: "No se pudo solicitar el token de carga.",
+    uploading: "Subiendo...",
+    uploadComplete: "Carga completada.",
+    uploadFailed: "No se pudo subir el archivo.",
   },
   menu: {
     backdrop: "Fondo del menú",

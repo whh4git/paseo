@@ -1625,6 +1625,9 @@ export const ko: TranslationResources = {
     workspaceUnavailable: "워크스페이스를 사용할 수 없습니다.",
     hostUnavailable: "업로드 호스트를 사용할 수 없습니다.",
     requestTokenFailed: "업로드 토큰을 요청하지 못했습니다.",
+    uploading: "업로드 중...",
+    uploadComplete: "업로드 완료.",
+    uploadFailed: "파일 업로드에 실패했습니다.",
   },
   menu: {
     backdrop: "메뉴 배경",

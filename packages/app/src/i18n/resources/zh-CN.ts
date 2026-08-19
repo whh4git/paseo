@@ -1595,6 +1595,9 @@ export const zhCN: TranslationResources = {
     workspaceUnavailable: "工作区不可用。",
     hostUnavailable: "上传 Host 不可用。",
     requestTokenFailed: "请求上传 token 失败。",
+    uploading: "正在上传...",
+    uploadComplete: "上传完成。",
+    uploadFailed: "上传失败。",
   },
   menu: {
     backdrop: "菜单背景",

@@ -1644,6 +1644,9 @@ export const ptBR: TranslationResources = {
     workspaceUnavailable: "O workspace não está disponível.",
     hostUnavailable: "Host de upload indisponível.",
     requestTokenFailed: "Falha ao solicitar token de upload.",
+    uploading: "Enviando...",
+    uploadComplete: "Envio concluído.",
+    uploadFailed: "Falha ao enviar arquivo.",
   },
   menu: {
     backdrop: "Fundo do menu",

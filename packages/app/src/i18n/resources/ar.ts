@@ -1615,6 +1615,9 @@ export const ar: TranslationResources = {
     workspaceUnavailable: "مساحة العمل غير متاحة.",
     hostUnavailable: "مضيف الرفع غير متاح.",
     requestTokenFailed: "فشل طلب رمز الرفع.",
+    uploading: "جارٍ الرفع...",
+    uploadComplete: "اكتمل الرفع.",
+    uploadFailed: "فشل رفع الملف.",
   },
   menu: {
     backdrop: "خلفية القائمة",

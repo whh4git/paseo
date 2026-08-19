@@ -1649,6 +1649,9 @@ export const ru: TranslationResources = {
     workspaceUnavailable: "Рабочая область недоступна.",
     hostUnavailable: "Хост отправки недоступен.",
     requestTokenFailed: "Не удалось запросить токен отправки.",
+    uploading: "Загрузка...",
+    uploadComplete: "Загрузка завершена.",
+    uploadFailed: "Не удалось загрузить файл.",
   },
   menu: {
     backdrop: "Фон меню",

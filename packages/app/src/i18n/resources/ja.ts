@@ -1631,6 +1631,9 @@ export const ja: TranslationResources = {
     workspaceUnavailable: "ワークスペースが利用できません。",
     hostUnavailable: "アップロードホストが利用できません。",
     requestTokenFailed: "アップロードトークンのリクエストに失敗しました。",
+    uploading: "アップロード中...",
+    uploadComplete: "アップロード完了。",
+    uploadFailed: "アップロードに失敗しました。",
   },
   menu: {
     backdrop: "メニューの背景",

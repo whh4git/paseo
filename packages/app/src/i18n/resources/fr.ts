@@ -1662,6 +1662,9 @@ export const fr: TranslationResources = {
     workspaceUnavailable: "L'espace de travail n'est pas disponible.",
     hostUnavailable: "L'hôte de téléversement n'est pas disponible.",
     requestTokenFailed: "Échec de la demande du jeton de téléversement.",
+    uploading: "Téléversement...",
+    uploadComplete: "Téléversement terminé.",
+    uploadFailed: "Échec du téléversement.",
   },
   menu: {
     backdrop: "Toile de fond du menu",

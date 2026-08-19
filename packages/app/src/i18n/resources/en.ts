@@ -1626,6 +1626,9 @@ export const en = {
     workspaceUnavailable: "Workspace is not available.",
     hostUnavailable: "Upload host is unavailable.",
     requestTokenFailed: "Failed to request upload token.",
+    uploading: "Uploading...",
+    uploadComplete: "Upload complete.",
+    uploadFailed: "Failed to upload file.",
   },
   menu: {
     backdrop: "Menu backdrop",
